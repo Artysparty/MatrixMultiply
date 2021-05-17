@@ -1,41 +1,86 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MatrixMultiply
 {
-    internal class Matrix
+    public class Matrix
     {
-        public int Size { get; set; }
-        private readonly int[,] _data;
+        public int[,] firstMatrix;
+        public int[,] secondMatrix;
+        public int[,] rezultMatrix;
+        public int n;
 
-
-        public Matrix(int size)
+        public void SetValues(int n)
         {
-            Size = size;
-            _data = new int[size, size];
-        }
+            this.n = n;
+            firstMatrix = new int[n, n];
+            secondMatrix = new int[n, n];
+            rezultMatrix = new int[n, n];
 
-        public int this[int x, int y]
-        {
-            get => _data[x, y];
-            set => _data[x, y] = value;
-        }
+            Random rand = new Random();
 
-        public override string ToString()
-        {
-            var stringBuilder = new StringBuilder();
-            for (var i = 0; i < Size; i++)
+            for (int i = 0; i < n; i++)
             {
-                stringBuilder.Append("[ ");
-                for (var j = 0; j < Size; j++)
+                for (int j = 0; j < n; j++)
                 {
-                    stringBuilder.Append(_data[i, j]);
-                    stringBuilder.Append(j == Size - 1 ? " " : ", ");
+                    firstMatrix[i, j] = rand.Next(100);
+                    secondMatrix[i, j] = rand.Next(100);
                 }
+            }
+        }
 
-                stringBuilder.AppendLine("]");
+        public void MultiplyParallel(int k)
+        {
+            int intervalLength = n / k;
+
+            Thread[] threads = new Thread[k];
+
+            for (int i = 0; i < k; i++)
+            {
+                Range range = new Range(i * intervalLength, i + 1 * intervalLength);
+                threads[i] = new Thread(new ParameterizedThreadStart(FindElems));
+                threads[i].Start(range);
             }
 
-            return stringBuilder.ToString();
+            for (int i = 0; i < k; i++)
+            {
+                threads[i].Join();
+            }
+        }
+
+
+        public void OrdinaryMultiply()
+        {
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    for (int k = 0; k < n; k++)
+                    {
+                        rezultMatrix[i, j] = firstMatrix[i, k] * secondMatrix[k, j];
+                    }
+                }
+            }
+        }
+
+        public void FindElems(object range)
+        {
+            Range r = (Range)range;
+
+            for (int i = r.start; i < r.end; i++)
+            {
+                for (int j = r.start; j < r.end; j++)
+                {
+                    for (int k = r.start; k < r.end; k++)
+                    {
+                        rezultMatrix[i, j] = firstMatrix[i, k] * secondMatrix[k, j];
+                    }
+                }
+            }
         }
     }
 }
